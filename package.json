@@ -1,0 +1,27 @@
+{
+  "name": "agendapet-web",
+    "version": "1.0.0",
+  "description": "Painel de agendamentos do pet shop Patinhas & Cia",
+  "main": "index.js",
+  "type": "module",
+  "scripts": {
+    "start": "http-server . -p 5500 -c-1 -o",
+    "fechamento": "node scripts/fechamento-dia.js --data=2026-10-20",
+    "validar": "node scripts/validar-agenda.cjs",
+    "validar:erro": "node scripts/validar-agenda.cjs data/agenda-invalida.json"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/dressaadrc-rgb/agendapet-web.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/dressaadrc-rgb/agendapet-web/issues"
+  },
+  "homepage": "https://github.com/dressaadrc-rgb/agendapet-web#readme",
+  "devDependencies": {
+    "http-server": "^14.1.1"
+  }
+}
