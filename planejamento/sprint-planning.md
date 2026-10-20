@@ -1,6 +1,6 @@
 # Sprint Planning — AgendaPet Web
 
-**Sprint:** 16/10/2026 a 02/11/2026 (Semanas 13 e 14) · **Cliente:** Patinhas & Cia · **Equipe:** 1 pessoa desenvolvedora (Andressa Rosa)
+**Sprint:** 16/10/2026 a 03/11/2026 (Semanas 13 e 14) · **Cliente:** Patinhas & Cia · **Equipe:** 1 pessoa desenvolvedora (Andressa Rosa)
 
 ## Meta da sprint
 
