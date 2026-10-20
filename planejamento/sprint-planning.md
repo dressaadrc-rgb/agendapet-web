@@ -62,4 +62,4 @@ Os requisitos obrigatórios (US01 a US12) não entram nesta lista. Se faltar tem
 | 20, 22 e 23/10 | Mentoria — Semana 13 | 20/10: US01, US10 (base) e US02 · 22/10: US03, US04 e US05 · 23/10: US07 e US06 |
 | 27 e 29/10 | Mentoria — Semana 14 | 27/10: US08 e US09 · 29/10: US11 e US12 |
 | 30/10 | Apresentação em live coding (Google Meet) + Retrospectiva | Demonstração de 15 min com código e tela funcionando; retrospectiva no README |
-| 02/11 | Entrega no AVA (até 22h) | Links do repositório e do Kanban |
+| 03/11 | Entrega no AVA (até 22h) | Links do repositório e do Kanban |
