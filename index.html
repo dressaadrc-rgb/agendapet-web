@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="description"
+      content="Painel de agendamentos do pet shop Patinhas & Cia: banho, tosa, consultas e hospedagem."
+    />
+    <title>AgendaPet Web — Patinhas & Cia</title>
+    <link rel="icon" href="img/favicon.svg" type="image/svg+xml" />
+    <link rel="stylesheet" href="css/style.css" />
+  </head>
+  <body>
+    <a class="skip-link" href="#conteudo">Ir para o conteúdo</a>
+
+    <header class="cabecalho">
+      <div class="marca">
+        <img src="img/logo.svg" alt="" width="48" height="48" />
+        <p class="marca-loja">Patinhas & Cia</p>
+        <h1>AgendaPet Web</h1>
+      </div>
+
+      <p class="relogio">Agora <time id="relogio">--:--</time></p>
+
+      <div class="acoes-cabecalho">
+        <button
+          type="button"
+          id="btn-lembretes"
+          class="botao botao-secundario"
+          aria-pressed="false"
+        >
+          Pausar lembretes
+        </button>
+        <button
+          type="button"
+          id="btn-tema"
+          class="botao botao-secundario"
+          aria-pressed="false"
+        >
+          Tema escuro
+        </button>
+      </div>
+
+      <nav aria-label="Seções do painel">
+        <ul class="menu">
+          <li><a href="#novo">Novo agendamento</a></li>
+          <li><a href="#agenda">Agenda do dia</a></li>
+          <li><a href="#fechamento">Fechamento do dia</a></li>
+        </ul>
+      </nav>
+    </header>
+
+    <main id="conteudo" tabindex="-1">
+      <div class="aviso-lembrete" id="lembrete" role="status" hidden></div>
+
+      <div class="painel">
+        <div class="coluna coluna-esquerda">
+          <section id="novo" class="cartao" aria-labelledby="titulo-novo">
+            <h2 id="titulo-novo">Novo agendamento</h2>
+
+            <form id="form-agendamento" novalidate>
+              <div class="campo">
+                <label for="tutor">Nome do tutor</label>
+                <input
+                  type="text"
+                  id="tutor"
+                  name="tutor"
+                  autocomplete="name"
+                  aria-describedby="erro-tutor"
+                />
+                <p class="erro-campo" id="erro-tutor"></p>
+              </div>
+
+              <div class="campo">
+                <label for="telefone">Telefone com DDD</label>
+                <input
+                  type="tel"
+                  id="telefone"
+                  name="telefone"
+                  inputmode="tel"
+                  placeholder="(11) 98888-7777"
+                  autocomplete="tel"
+                  aria-describedby="erro-telefone"
+                />
+                <p class="erro-campo" id="erro-telefone"></p>
+              </div>
+
+              <div class="linha-campos">
+                <div class="campo">
+                  <label for="pet">Nome do pet</label>
+                  <input
+                    type="text"
+                    id="pet"
+                    name="pet"
+                    aria-describedby="erro-pet"
+                  />
+                  <p class="erro-campo" id="erro-pet"></p>
+                </div>
+                <div class="campo">
+                  <label for="especie">Espécie</label>
+                  <select
+                    id="especie"
+                    name="especie"
+                    aria-describedby="erro-especie"
+                  >
+                    <option value="">Selecione...</option>
+                    <option>Cão</option>
+                    <option>Gato</option>
+                    <option>Ave</option>
+                    <option>Outro</option>
+                  </select>
+                  <p class="erro-campo" id="erro-especie"></p>
+                </div>
+              </div>
+
+              <div class="campo">
+                <label for="servico">Serviço</label>
+                <select
+                  id="servico"
+                  name="servico"
+                  aria-describedby="erro-servico"
+                >
+                  <option value="">Selecione...</option>
+                </select>
+                <p class="erro-campo" id="erro-servico"></p>
+              </div>
+
+              <div class="linha-campos">
+                <div class="campo">
+                  <label for="data">Data</label>
+                  <input
+                    type="date"
+                    id="data"
+                    name="data"
+                    aria-describedby="erro-data"
+                  />
+                  <p class="erro-campo" id="erro-data"></p>
+                </div>
+                <div class="campo">
+                  <label for="hora">Horário</label>
+                  <input
+                    type="time"
+                    id="hora"
+                    name="hora"
+                    min="08:00"
+                    max="17:30"
+                    step="1800"
+                    aria-describedby="erro-hora"
+                  />
+                  <p class="erro-campo" id="erro-hora"></p>
+                </div>
+              </div>
+
+              <div class="aviso-feriado" id="aviso-feriado" role="alert" hidden>
+                <p id="texto-feriado"></p>
+                <label
+                  class="campo-checkbox"
+                  id="caixa-confirmar-feriado"
+                  hidden
+                >
+                  <input
+                    type="checkbox"
+                    id="confirmar-feriado"
+                    name="confirmarFeriado"
+                  />
+                  Agendar mesmo assim
+                </label>
+              </div>
+
+              <div class="campo-checkbox">
+                <input
+                  type="checkbox"
+                  id="domiciliar"
+                  name="domiciliar"
+                  aria-describedby="dica-domiciliar"
+                />
+                <label for="domiciliar">Atendimento domiciliar</label>
+              </div>
+              <p class="dica" id="dica-domiciliar">
+                Escolha um serviço para ver se ele pode ser feito na casa do
+                tutor.
+              </p>
+
+              <fieldset id="grupo-endereco" class="grupo-endereco" hidden>
+                <legend>Endereço do atendimento</legend>
+
+                <div class="campo">
+                  <label for="cep">CEP</label>
+                  <input
+                    type="text"
+                    id="cep"
+                    name="cep"
+                    inputmode="numeric"
+                    maxlength="9"
+                    placeholder="00000-000"
+                    aria-describedby="status-cep"
+                  />
+                  <p class="status-cep" id="status-cep" aria-live="polite"></p>
+                </div>
+                <div class="campo">
+                  <label for="logradouro">Rua</label>
+                  <input
+                    type="text"
+                    id="logradouro"
+                    name="logradouro"
+                    aria-describedby="erro-logradouro"
+                  />
+                  <p class="erro-campo" id="erro-logradouro"></p>
+                </div>
+                <div class="linha-campos">
+                  <div class="campo">
+                    <label for="numero">Número</label>
+                    <input
+                      type="text"
+                      id="numero"
+                      name="numero"
+                      aria-describedby="erro-numero"
+                    />
+                    <p class="erro-campo" id="erro-numero"></p>
+                  </div>
+                  <div class="campo">
+                    <label for="complemento">Complemento (opcional)</label>
+                    <input type="text" id="complemento" name="complemento" />
+                  </div>
+                </div>
+                <div class="campo">
+                  <label for="bairro">Bairro</label>
+                  <input type="text" id="bairro" name="bairro" />
+                </div>
+                <div class="linha-campos">
+                  <div class="campo">
+                    <label for="cidade">Cidade</label>
+                    <input
+                      type="text"
+                      id="cidade"
+                      name="cidade"
+                      aria-describedby="erro-cidade"
+                    />
+                    <p class="erro-campo" id="erro-cidade"></p>
+                  </div>
+                  <div class="campo">
+                    <label for="uf">UF</label>
+                    <input type="text" id="uf" name="uf" maxlength="2" />
+                  </div>
+                </div>
+              </fieldset>
+
+              <div class="campo">
+                <label for="observacoes">Observações (opcional)</label>
+                <textarea
+                  id="observacoes"
+                  name="observacoes"
+                  rows="3"
+                ></textarea>
+              </div>
+
+              <button type="submit" class="botao botao-principal">
+                Salvar agendamento
+              </button>
+            </form>
+          </section>
+
+          <aside class="cartao" aria-labelledby="titulo-servicos">
+            <h2 id="titulo-servicos">Serviços e preços</h2>
+            <div class="estado" id="estado-servicos" aria-live="polite"></div>
+            <ul class="lista-servicos" id="lista-servicos"></ul>
+          </aside>
+        </div>
+
+        <div class="coluna coluna-direita">
+          <section id="agenda" class="cartao" aria-labelledby="titulo-agenda">
+            <h2 id="titulo-agenda">Agenda do dia</h2>
+
+            <div class="linha-campos">
+              <div class="campo">
+                <label for="data-agenda">Dia</label>
+                <input type="date" id="data-agenda" name="dataAgenda" />
+              </div>
+              <div class="campo">
+                <label for="busca">Buscar tutor ou pet</label>
+                <input
+                  type="search"
+                  id="busca"
+                  name="busca"
+                  placeholder="Digite para filtrar..."
+                />
+              </div>
+              <div class="campo">
+                <label for="filtro-status">Status</label>
+                <select id="filtro-status" name="filtroStatus">
+                  <option value="todos">Todos</option>
+                  <option value="Agendado">Agendado</option>
+                  <option value="Concluído">Concluído</option>
+                  <option value="Cancelado">Cancelado</option>
+                </select>
+              </div>
+            </div>
+
+            <p class="proximo-atendimento" id="proximo-atendimento">
+              Próximo atendimento de hoje: nenhum pendente
+            </p>
+            <p class="contador" id="contador-agenda" aria-live="polite">
+              0 agendamentos
+            </p>
+
+            <ul class="lista-agenda" id="lista-agenda"></ul>
+            <p class="lista-vazia" id="lista-vazia">
+              Nenhum agendamento para este dia. Use o formulário para criar o
+              primeiro.
+            </p>
+          </section>
+
+          <section
+            id="fechamento"
+            class="cartao"
+            aria-labelledby="titulo-fechamento"
+          >
+            <h2 id="titulo-fechamento">Fechamento do dia</h2>
+            <p class="resumo-dia" id="resumo-dia"></p>
+
+            <dl class="indicadores">
+              <div class="indicador">
+                <dt>Atendimentos</dt>
+                <dd id="total-atendimentos">0</dd>
+              </div>
+              <div class="indicador">
+                <dt>Concluídos</dt>
+                <dd id="total-concluidos">0</dd>
+              </div>
+              <div class="indicador">
+                <dt>Agendados</dt>
+                <dd id="total-agendados">0</dd>
+              </div>
+              <div class="indicador">
+                <dt>Cancelados</dt>
+                <dd id="total-cancelados">0</dd>
+              </div>
+              <div class="indicador">
+                <dt>Faturamento</dt>
+                <dd id="total-faturamento">R$ 0,00</dd>
+              </div>
+              <div class="indicador">
+                <dt>A receber</dt>
+                <dd id="total-receber">R$ 0,00</dd>
+              </div>
+            </dl>
+
+            <h3>Por serviço</h3>
+            <table class="tabela">
+              <caption class="visualmente-oculto">
+                Atendimentos ativos e valor faturado por serviço no dia
+              </caption>
+              <thead>
+                <tr>
+                  <th scope="col">Serviço</th>
+                  <th scope="col">Qtd.</th>
+                  <th scope="col">Faturado</th>
+                </tr>
+              </thead>
+              <tbody id="corpo-por-servico">
+                <tr>
+                  <td colspan="3">Nenhum atendimento ativo neste dia.</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <h3>Dados</h3>
+            <div class="acoes-dados">
+              <button
+                type="button"
+                id="btn-exemplo"
+                class="botao botao-secundario"
+              >
+                Carregar dados de exemplo
+              </button>
+              <button
+                type="button"
+                id="btn-exportar"
+                class="botao botao-secundario"
+              >
+                Exportar agenda (JSON)
+              </button>
+              <button type="button" id="btn-limpar" class="botao botao-perigo">
+                Limpar meus dados
+              </button>
+            </div>
+          </section>
+
+          <aside class="cartao" aria-labelledby="titulo-atalhos">
+            <h2 id="titulo-atalhos">Atalhos de teclado</h2>
+            <ul class="lista-atalhos">
+              <li><kbd>N</kbd> vai para o formulário de novo agendamento</li>
+              <li><kbd>/</kbd> foca a busca da agenda</li>
+              <li><kbd>Esc</kbd> limpa a busca</li>
+            </ul>
+          </aside>
+        </div>
+      </div>
+    </main>
+
+    <footer class="rodape">
+      <p>AgendaPet Web — projeto de estudo</p>
+    </footer>
+    <div class="toast" id="toast" role="status" hidden></div>
+  </body>
+</html>
