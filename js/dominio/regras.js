@@ -69,5 +69,14 @@ export function validarAgendamento(dados, servico, agora = new Date()) {
     erros.hora = 'Esse horário de hoje já passou.';
   }
 
+  if (dados.domiciliar) {
+    if (servico && !servico.domiciliar) {
+      erros.servico = `"${servico.nome}" é realizado somente na loja.`;
+    }
+    if (!dados.endereco.logradouro) erros.logradouro = 'Informe a rua.';
+    if (!dados.endereco.numero) erros.numero = 'Informe o número.';
+    if (!dados.endereco.cidade) erros.cidade = 'Informe a cidade.';
+  }
+
   return erros;
 }
