@@ -1,20 +1,19 @@
 ## O que mudou
-<!-- Resumo em 1 a 3 linhas -->
+<!-- Resuma em 2 ou 3 linhas o que este Pull Request entrega. -->
 
 ## Ticket
-US__ — <!-- nome da história -->
+Fecha **US__** – <!-- título da história -->
 
 ## Como testar
-1. 
-2. 
+1. `npm install` e `npm start`
+2. <!-- passo a passo para ver a mudança funcionando -->
 
 ## Evidência
-<!-- Print da tela, do terminal ou do console -->
+<!-- Print ou GIF mostrando o resultado (inclusive em 360 px, se mexeu em layout). -->
 
-## Checklist
-- [ ] Cenários de aceite da história passam
-- [ ] Commits no padrão `tipo(US##): descrição`
-- [ ] Sem erros no console
-- [ ] Layout conferido em 360 px
-- [ ] Navegação por teclado conferida
-- [ ] Sei explicar o código linha a linha
+## Definição de Pronto
+- [ ] Os cenários de aceite da história passam
+- [ ] Sem erros no console do navegador (nem no terminal, se mexeu em Node)
+- [ ] Responsividade e teclado conferidos
+- [ ] Commits no padrão `tipo(US__): descrição no imperativo`
+- [ ] Cartão do Kanban movido para "Concluído" com o link deste PR
