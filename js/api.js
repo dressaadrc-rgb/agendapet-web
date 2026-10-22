@@ -26,3 +26,25 @@ async function buscarJSON(url) {
 export function carregarServicos() {
   return buscarJSON('data/servicos.json');
 }
+
+export async function buscarCep(cep) {
+  const digitos = cep.replace(/\D/g, '');
+  if (digitos.length !== 8) {
+    throw new ErroApi('formato', 'O CEP deve ter 8 dígitos.'); // nem chama a rede
+  }
+
+  const dados = await buscarJSON(`https://viacep.com.br/ws/${digitos}/json/`);
+
+  // CEP bem formatado, mas inexistente: o ViaCEP responde 200 com { "erro": true }
+  if (dados.erro) {
+    throw new ErroApi('nao-encontrado', 'CEP não encontrado.');
+  }
+
+  return {
+    cep: dados.cep,
+    logradouro: dados.logradouro,
+    bairro: dados.bairro,
+    cidade: dados.localidade, // o ViaCEP chama a cidade de "localidade"
+    uf: dados.uf,
+  };
+}
