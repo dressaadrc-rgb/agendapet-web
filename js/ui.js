@@ -65,3 +65,35 @@ export function popularSelectServicos(select, servicos) {
   );
   select.replaceChildren(new Option('Selecione...', ''), ...opcoes);
 }
+
+// ---------- Erros do formulário ----------
+
+export function limparErros(form) {
+  form.querySelectorAll('[aria-invalid="true"]').forEach((campo) => campo.removeAttribute('aria-invalid'));
+  form.querySelectorAll('.campo__erro').forEach((mensagem) => { mensagem.textContent = ''; });
+}
+
+// erros = { tutor: 'mensagem', data: 'mensagem', ... }
+export function mostrarErros(erros) {
+  const campos = Object.keys(erros);
+
+  campos.forEach((id) => {
+    document.getElementById(id).setAttribute('aria-invalid', 'true');
+    document.getElementById(`erro-${id}`).textContent = erros[id];
+  });
+
+  if (campos.length > 0) document.getElementById(campos[0]).focus(); // foco no 1º inválido
+}
+
+// ---------- Toast (aviso que some sozinho) ----------
+
+let timerToast = null;
+
+export function mostrarToast(texto, tipo = 'sucesso', duracaoMs = 4000) {
+  const toast = document.getElementById('toast');
+  clearTimeout(timerToast); // um toast novo cancela o timer do anterior
+  toast.textContent = texto;
+  toast.className = `toast toast--${tipo}`;
+  toast.hidden = false;
+  timerToast = setTimeout(() => { toast.hidden = true; }, duracaoMs);
+}
