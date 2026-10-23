@@ -1,11 +1,12 @@
-import { carregarServicos, buscarCep } from './api.js';
+import { carregarServicos, buscarCep, buscarFeriados } from './api.js';
 import * as ui from './ui.js';
 import { Servico } from './dominio/agendamento.js';
-import { validarAgendamento, hojeISO, formatarData } from './dominio/regras.js';
+import { validarAgendamento, hojeISO, formatarData, encontrarFeriado } from './dominio/regras.js';
 
 const estado = {
   servicos: [], //Servicos
   agenda: [],   // agendamentos salvos
+  feriado: null, // { date, name } se a data escolhida for feriado
 };
 
 const $ = (id) => document.getElementById(id);
@@ -45,6 +46,7 @@ function lerFormulario() {
     servicoId: valor('servico'),
     data: valor('data'),
     hora: valor('hora'),
+    confirmarFeriado: $('confirmar-feriado').checked,
     domiciliar,
     endereco: domiciliar
       ? {
@@ -69,6 +71,9 @@ function aoEnviarFormulario(evento) {
   const dados = lerFormulario();
   const servico = estado.servicos.find((s) => s.id === dados.servicoId);
   const erros = validarAgendamento(dados, servico);
+  if (estado.feriado && !dados.confirmarFeriado && !erros.data) {
+    erros.data = 'Marque "Agendar mesmo assim" para agendar em um feriado.';
+  }
 
   if (Object.keys(erros).length > 0) {
     ui.mostrarErros(erros);
@@ -76,7 +81,8 @@ function aoEnviarFormulario(evento) {
   }
 
   estado.agenda.push({ ...dados, status: 'Agendado' });
-  form.reset();  limparEndereco();
+  form.reset();  limparEndereco(); estado.feriado = null;
+  ui.esconderAvisoFeriado();
   ui.mostrarToast(`Agendamento salvo: ${dados.pet}, ${formatarData(dados.data)} às ${dados.hora}.`);
 }
 
@@ -160,11 +166,38 @@ function limparEndereco() {
 function iniciar() {
   $('data').min = hojeISO();
   $('form-agendamento').addEventListener('submit', aoEnviarFormulario);
+  $('data').addEventListener('change', aoEscolherData);
   $('servico').addEventListener('change', atualizarOpcaoDomiciliar);
   $('domiciliar').addEventListener('change', mostrarOuEsconderEndereco);
   $('cep').addEventListener('input', aoDigitarCep);
   $('cep').addEventListener('blur', aoSairDoCep);
   carregarCatalogo();
+}
+
+async function aoEscolherData() {
+  const data = $('data').value;
+  estado.feriado = null;
+  ui.esconderAvisoFeriado();
+  if (!data) return;
+
+  try {
+    const feriados = await buscarFeriados(data.slice(0, 4)); // "2026-12-25" → "2026"
+    if ($('data').value !== data) return; // trocou a data enquanto esperava: descarta
+
+    estado.feriado = encontrarFeriado(feriados, data);
+    if (estado.feriado) {
+      ui.mostrarAvisoFeriado(
+        `${formatarData(data)} é feriado: ${estado.feriado.name}. Confirme com o tutor antes de agendar.`,
+        true
+      );
+    }
+  } catch {
+    if ($('data').value !== data) return;
+    ui.mostrarAvisoFeriado(
+      'Não foi possível verificar se a data é feriado agora. Você pode continuar o agendamento.',
+      false // sem caixa de confirmação: não bloqueia
+    );
+  }
 }
 
 iniciar();

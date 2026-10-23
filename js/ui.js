@@ -97,3 +97,15 @@ export function mostrarToast(texto, tipo = 'sucesso', duracaoMs = 4000) {
   toast.hidden = false;
   timerToast = setTimeout(() => { toast.hidden = true; }, duracaoMs);
 }
+// aviso de feriado
+export function mostrarAvisoFeriado(texto, pedirConfirmacao) {
+  document.getElementById('texto-feriado').textContent = texto;
+  document.getElementById('caixa-confirmar-feriado').hidden = !pedirConfirmacao;
+  document.getElementById('confirmar-feriado').checked = false;
+  document.getElementById('aviso-feriado').hidden = false;
+}
+
+export function esconderAvisoFeriado() {
+  document.getElementById('aviso-feriado').hidden = true;
+  document.getElementById('confirmar-feriado').checked = false;
+}

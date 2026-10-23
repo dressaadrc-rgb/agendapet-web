@@ -80,3 +80,7 @@ export function validarAgendamento(dados, servico, agora = new Date()) {
 
   return erros;
 }
+
+export function encontrarFeriado(feriados, data) {
+  return feriados.find((feriado) => feriado.date === data) ?? null;
+}

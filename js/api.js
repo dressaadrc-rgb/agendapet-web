@@ -1,4 +1,5 @@
-// Erro com "tipo", para a tela saber qual mensagem mostrar.
+import { lerJSON, salvarJSON } from './storage.js';
+
 export class ErroApi extends Error {
   constructor(tipo, mensagem) {
     super(mensagem);
@@ -47,4 +48,19 @@ export async function buscarCep(cep) {
     cidade: dados.localidade, // o ViaCEP chama a cidade de "localidade"
     uf: dados.uf,
   };
+}
+
+const TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
+
+export async function buscarFeriados(ano) {
+  const chave = `agendapet:feriados:${ano}`;
+  const cache = lerJSON(chave, null);
+
+  if (cache && Array.isArray(cache.feriados) && Date.now() - cache.salvoEm < TRINTA_DIAS_MS) {
+    return cache.feriados; // cache válido: nem vai à internet
+  }
+
+  const feriados = await buscarJSON(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
+  salvarJSON(chave, { salvoEm: Date.now(), feriados });
+  return feriados;
 }
