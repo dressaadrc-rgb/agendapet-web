@@ -84,3 +84,8 @@ export function validarAgendamento(dados, servico, agora = new Date()) {
 export function encontrarFeriado(feriados, data) {
   return feriados.find((feriado) => feriado.date === data) ?? null;
 }
+
+// RN02: devolve o agendamento que conflita com o novo (ou null)
+export function temConflito(lista, novo) {
+  return lista.find((a) => novo.conflitaCom(a)) ?? null;
+}
