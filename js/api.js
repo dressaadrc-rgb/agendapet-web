@@ -11,13 +11,13 @@ export class ErroApi extends Error {
 async function buscarJSON(url) {
   let resposta;
   try {
-    resposta = await fetch(url); // só falha aqui se nem chegou ao servidor (sem rede)
+    resposta = await fetch(url); 
   } catch {
     throw new ErroApi('rede', 'Sem conexão.');
   }
 
   if (!resposta.ok) {
-    // 404, 500... NÃO fazem o fetch falhar: precisamos conferir resposta.ok
+    
     throw new ErroApi('http', `erro HTTP ${resposta.status}`);
   }
 
@@ -36,7 +36,7 @@ export async function buscarCep(cep) {
 
   const dados = await buscarJSON(`https://viacep.com.br/ws/${digitos}/json/`);
 
-  // CEP bem formatado, mas inexistente: o ViaCEP responde 200 com { "erro": true }
+  
   if (dados.erro) {
     throw new ErroApi('nao-encontrado', 'CEP não encontrado.');
   }
@@ -57,10 +57,14 @@ export async function buscarFeriados(ano) {
   const cache = lerJSON(chave, null);
 
   if (cache && Array.isArray(cache.feriados) && Date.now() - cache.salvoEm < TRINTA_DIAS_MS) {
-    return cache.feriados; // cache válido: nem vai à internet
+    return cache.feriados; 
   }
 
   const feriados = await buscarJSON(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
   salvarJSON(chave, { salvoEm: Date.now(), feriados });
   return feriados;
+}
+
+export function carregarAgendaExemplo() {
+  return buscarJSON('data/agenda-exemplo.json');
 }

@@ -1,4 +1,4 @@
-import { formatarMoeda } from './dominio/regras.js';
+import { formatarMoeda, formatarData } from './dominio/regras.js';
 
 // Mostra "carregando", "erro" ou "sucesso" num elemento .status
 export function mostrarEstado(elemento, tipo, texto, aoTentarNovamente) {
@@ -66,7 +66,7 @@ export function popularSelectServicos(select, servicos) {
   select.replaceChildren(new Option('Selecione...', ''), ...opcoes);
 }
 
-// ---------- Erros do formulário ----------
+// Erros do formulario
 
 export function limparErros(form) {
   form.querySelectorAll('[aria-invalid="true"]').forEach((campo) => campo.removeAttribute('aria-invalid'));
@@ -85,7 +85,7 @@ export function mostrarErros(erros) {
   if (campos.length > 0) document.getElementById(campos[0]).focus(); // foco no 1º inválido
 }
 
-// ---------- Toast (aviso que some sozinho) ----------
+// Toast e avisos
 
 let timerToast = null;
 
@@ -108,4 +108,41 @@ export function mostrarAvisoFeriado(texto, pedirConfirmacao) {
 export function esconderAvisoFeriado() {
   document.getElementById('aviso-feriado').hidden = true;
   document.getElementById('confirmar-feriado').checked = false;
+}
+
+// Fechamento do dia
+
+export function renderizarFechamento(f) {
+  const escrever = (id, valor) => { document.getElementById(id).textContent = valor; };
+
+  let situacao = 'sem atendimentos';
+  if (f.total > 0) situacao = f.encerrado ? 'dia encerrado' : 'dia em andamento';
+
+  escrever('resumo-dia', `${formatarData(f.data)} · ${situacao}`);
+  escrever('total-atendimentos', f.total);
+  escrever('total-concluidos', f.concluidos);
+  escrever('total-agendados', f.agendados);
+  escrever('total-cancelados', f.cancelados);
+  escrever('total-faturamento', formatarMoeda(f.faturamento));
+  escrever('total-receber', formatarMoeda(f.aReceber));
+
+  const corpo = document.getElementById('corpo-por-servico');
+  if (f.porServico.length === 0) {
+    corpo.replaceChildren(criarLinhaTabela(['Nenhum atendimento ativo neste dia.'], 3));
+    return;
+  }
+  corpo.replaceChildren(
+    ...f.porServico.map((linha) => criarLinhaTabela([linha.servico, linha.quantidade, formatarMoeda(linha.faturado)]))
+  );
+}
+
+function criarLinhaTabela(valores, colunasOcupadas = 1) {
+  const linha = document.createElement('tr');
+  valores.forEach((valor) => {
+    const celula = document.createElement('td');
+    celula.textContent = valor;
+    if (colunasOcupadas > 1) celula.colSpan = colunasOcupadas;
+    linha.append(celula);
+  });
+  return linha;
 }

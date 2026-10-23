@@ -1,12 +1,15 @@
-import { carregarServicos, buscarCep, buscarFeriados } from './api.js';
+import { carregarServicos, buscarCep, buscarFeriados, carregarAgendaExemplo } from './api.js';
 import * as ui from './ui.js';
-import { Servico } from './dominio/agendamento.js';
-import { validarAgendamento, hojeISO, formatarData, encontrarFeriado } from './dominio/regras.js';
+import { Servico, criarAgendamento, criarGeradorProtocolo, maiorNumeroProtocolo } from './dominio/agendamento.js';
+import { validarAgendamento, hojeISO, formatarData, encontrarFeriado, temConflito } from './dominio/regras.js';
+import { calcularFechamento } from './dominio/fechamento.js';
 
 const estado = {
-  servicos: [], //Servicos
-  agenda: [],   // agendamentos salvos
-  feriado: null, // { date, name } se a data escolhida for feriado
+  servicos: [],                              // Servico[]
+  agenda: [],                                // Agendamento[] e AgendamentoDomiciliar[]
+  dataAgenda: hojeISO(),                     // dia exibido na agenda e no fechamento
+  feriado: null,                             // { date, name } se a data escolhida for feriado
+  gerarProtocolo: criarGeradorProtocolo(0),  // closure: AP-0001, AP-0002...
 };
 
 const $ = (id) => document.getElementById(id);
@@ -71,6 +74,8 @@ function aoEnviarFormulario(evento) {
   const dados = lerFormulario();
   const servico = estado.servicos.find((s) => s.id === dados.servicoId);
   const erros = validarAgendamento(dados, servico);
+
+  // RN08: em feriado, só agenda se marcou "Agendar mesmo assim"
   if (estado.feriado && !dados.confirmarFeriado && !erros.data) {
     erros.data = 'Marque "Agendar mesmo assim" para agendar em um feriado.';
   }
@@ -80,10 +85,28 @@ function aoEnviarFormulario(evento) {
     return;
   }
 
-  estado.agenda.push({ ...dados, status: 'Agendado' });
-  form.reset();  limparEndereco(); estado.feriado = null;
+  // A fábrica escolhe a classe: Agendamento ou AgendamentoDomiciliar
+  const novo = criarAgendamento(dados, estado.servicos);
+
+  // RN02: conflito de horário
+  if (temConflito(estado.agenda, novo)) {
+    ui.mostrarErros({
+      hora: `Já existe um atendimento às ${novo.hora} em ${formatarData(novo.data)}. Escolha outro horário.`,
+    });
+    return;
+  }
+
+  novo.protocolo = estado.gerarProtocolo(); 
+  estado.agenda.push(novo);
+  estado.dataAgenda = novo.data; 
+  $('data-agenda').value = novo.data;
+
+  form.reset();
+  limparEndereco();
+  estado.feriado = null;
   ui.esconderAvisoFeriado();
-  ui.mostrarToast(`Agendamento salvo: ${dados.pet}, ${formatarData(dados.data)} às ${dados.hora}.`);
+  atualizarTela();
+  ui.mostrarToast(`Agendamento ${novo.protocolo} salvo: ${novo.pet}, ${formatarData(novo.data)} às ${novo.hora}.`);
 }
 
 
@@ -165,13 +188,19 @@ function limparEndereco() {
 
 function iniciar() {
   $('data').min = hojeISO();
+  $('data-agenda').value = estado.dataAgenda;
+
   $('form-agendamento').addEventListener('submit', aoEnviarFormulario);
   $('data').addEventListener('change', aoEscolherData);
   $('servico').addEventListener('change', atualizarOpcaoDomiciliar);
   $('domiciliar').addEventListener('change', mostrarOuEsconderEndereco);
   $('cep').addEventListener('input', aoDigitarCep);
   $('cep').addEventListener('blur', aoSairDoCep);
+  $('data-agenda').addEventListener('change', aoTrocarDiaAgenda);
+  $('btn-exemplo').addEventListener('click', aoCarregarExemplo);
+
   carregarCatalogo();
+  atualizarTela();
 }
 
 async function aoEscolherData() {
@@ -195,8 +224,34 @@ async function aoEscolherData() {
     if ($('data').value !== data) return;
     ui.mostrarAvisoFeriado(
       'Não foi possível verificar se a data é feriado agora. Você pode continuar o agendamento.',
-      false // sem caixa de confirmação: não bloqueia
+      false // não bloqueia
     );
+  }
+}
+
+// tela
+
+function atualizarTela() {
+  ui.renderizarFechamento(calcularFechamento(estado.agenda, estado.dataAgenda));
+  // na US06 entra aqui também a lista da agenda
+}
+
+function aoTrocarDiaAgenda() {
+  estado.dataAgenda = $('data-agenda').value || hojeISO();
+  atualizarTela();
+}
+
+async function aoCarregarExemplo() {
+  try {
+    const dados = await carregarAgendaExemplo();
+    estado.agenda = dados.map((item) => criarAgendamento(item, estado.servicos));
+    estado.gerarProtocolo = criarGeradorProtocolo(maiorNumeroProtocolo(estado.agenda)); // RN07
+    estado.dataAgenda = '2026-10-20';
+    $('data-agenda').value = estado.dataAgenda;
+    atualizarTela();
+    ui.mostrarToast(`${estado.agenda.length} agendamentos de exemplo carregados.`, 'info');
+  } catch {
+    ui.mostrarToast('Não foi possível carregar os dados de exemplo.', 'erro');
   }
 }
 
