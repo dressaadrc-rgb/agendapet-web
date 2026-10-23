@@ -1,6 +1,6 @@
 {
   "name": "agendapet-web",
-    "version": "1.0.0",
+  "version": "1.0.0",
   "description": "Painel de agendamentos do pet shop Patinhas & Cia",
   "main": "index.js",
   "type": "module",
