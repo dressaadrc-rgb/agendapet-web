@@ -1,4 +1,5 @@
 import { formatarMoeda, formatarData } from './dominio/regras.js';
+import { STATUS } from './dominio/agendamento.js';
 
 // Mostra "carregando", "erro" ou "sucesso" num elemento .status
 export function mostrarEstado(elemento, tipo, texto, aoTentarNovamente) {
@@ -145,4 +146,93 @@ function criarLinhaTabela(valores, colunasOcupadas = 1) {
     linha.append(celula);
   });
   return linha;
+}
+
+// agenda do dia
+
+const CLASSE_STATUS = { 'Agendado': 'agendado', 'Concluído': 'concluido', 'Cancelado': 'cancelado' };
+
+// Atalho para criar elemento com classe e texto
+function criar(tag, classe, texto) {
+  const elemento = document.createElement(tag);
+  if (classe) elemento.className = classe;
+  if (texto !== undefined) elemento.textContent = texto;
+  return elemento;
+}
+
+export function renderizarAgenda({ itens, totalDoDia, expandidos, proximo }) {
+  const lista = document.getElementById('lista-agenda');
+  lista.replaceChildren(...itens.map((a) => criarItemAgenda(a, expandidos.has(a.protocolo))));
+
+  const quantidade = itens.length;
+  document.getElementById('contador-agenda').textContent =
+    `${quantidade} ${quantidade === 1 ? 'agendamento' : 'agendamentos'}`;
+
+  const vazio = document.getElementById('lista-vazia');
+  vazio.hidden = quantidade > 0;
+  vazio.textContent = totalDoDia === 0
+    ? 'Nenhum agendamento para este dia. Use o formulário para criar o primeiro.'
+    : 'Nenhum agendamento corresponde à busca ou ao filtro.';
+
+  document.getElementById('proximo-atendimento').textContent = proximo
+    ? `Próximo atendimento de hoje: ${proximo.hora} — ${proximo.pet} (${proximo.servico.nome})`
+    : 'Próximo atendimento de hoje: nenhum pendente';
+}
+
+function criarItemAgenda(a, expandido) {
+  const item = criar('li', `item item--${CLASSE_STATUS[a.status]}`);
+  if (expandido) item.classList.add('item--expandido');
+  item.dataset.protocolo = a.protocolo; // vira data-protocolo="AP-0001" no HTML
+
+  // Botão que abre/fecha os detalhes (acessível por teclado)
+  const idDetalhes = `detalhes-${a.protocolo}`;
+  const alternar = criar('button', 'item__toggle');
+  alternar.type = 'button';
+  alternar.dataset.acao = 'alternar';
+  alternar.setAttribute('aria-expanded', String(expandido));
+  alternar.setAttribute('aria-controls', idDetalhes);
+  alternar.append(
+    criar('span', 'item__hora', a.hora),
+    criar('span', 'item__titulo', `${a.pet} · ${a.servico.nome}`),
+    criar('span', 'item__tutor', `${a.tutor} (${a.tipo})`),
+  );
+
+  // Selo de status (texto + cor) e valor
+  const selos = criar('div', 'item__selos');
+  selos.append(
+    criar('span', `selo selo--${CLASSE_STATUS[a.status]}`, a.status),
+    criar('span', 'item__valor', formatarMoeda(a.calcularValor())),
+  );
+
+  const linha = criar('div', 'item__linha');
+  linha.append(alternar, selos);
+
+  // RN05: Concluído e Cancelado ficam travados
+  const travado = a.status !== STATUS.AGENDADO;
+  const acoes = criar('div', 'item__acoes');
+  acoes.append(
+    criarBotaoAcao('concluir', 'Concluir', 'botao--secundario', travado, a),
+    criarBotaoAcao('cancelar', 'Cancelar', 'botao--perigo', travado, a),
+  );
+
+  // Detalhes expansíveis
+  const detalhes = criar('dl', 'item__detalhes');
+  detalhes.id = idDetalhes;
+  detalhes.hidden = !expandido;
+  const informacoes = [['Protocolo', a.protocolo], ['Telefone', a.telefone], ['Espécie', a.especie]];
+  if (a.tipo === 'Domiciliar') informacoes.push(['Endereço', a.enderecoCompleto()]);
+  if (a.observacoes) informacoes.push(['Observações', a.observacoes]);
+  informacoes.forEach(([termo, valor]) => detalhes.append(criar('dt', '', termo), criar('dd', '', valor)));
+
+  item.append(linha, acoes, detalhes);
+  return item;
+}
+
+function criarBotaoAcao(acao, texto, variante, desabilitado, a) {
+  const botao = criar('button', `botao botao--pequeno ${variante}`, texto);
+  botao.type = 'button';
+  botao.dataset.acao = acao;
+  botao.disabled = desabilitado;
+  botao.setAttribute('aria-label', `${texto} ${a.protocolo} (${a.pet})`);
+  return botao;
 }

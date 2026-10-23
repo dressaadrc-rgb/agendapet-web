@@ -1,13 +1,18 @@
 import { carregarServicos, buscarCep, buscarFeriados, carregarAgendaExemplo } from './api.js';
 import * as ui from './ui.js';
-import { Servico, criarAgendamento, criarGeradorProtocolo, maiorNumeroProtocolo } from './dominio/agendamento.js';
-import { validarAgendamento, hojeISO, formatarData, encontrarFeriado, temConflito } from './dominio/regras.js';
-import { calcularFechamento } from './dominio/fechamento.js';
+import { Servico, STATUS, criarAgendamento, criarGeradorProtocolo, maiorNumeroProtocolo } from './dominio/agendamento.js';
+import { validarAgendamento, hojeISO, horaAtual, formatarData, encontrarFeriado, temConflito } from './dominio/regras.js';
+import {
+  calcularFechamento, filtrarAgendamentos, porData, porStatus, porBusca, ordenarPorHorario, proximoAtendimento,
+} from './dominio/fechamento.js';
 
 const estado = {
   servicos: [],                              // Servico[]
   agenda: [],                                // Agendamento[] e AgendamentoDomiciliar[]
   dataAgenda: hojeISO(),                     // dia exibido na agenda e no fechamento
+  filtroStatus: 'todos',
+  busca: '',
+  expandidos: new Set(),                     // protocolos com detalhes abertos
   feriado: null,                             // { date, name } se a data escolhida for feriado
   gerarProtocolo: criarGeradorProtocolo(0),  // closure: AP-0001, AP-0002...
 };
@@ -190,13 +195,24 @@ function iniciar() {
   $('data').min = hojeISO();
   $('data-agenda').value = estado.dataAgenda;
 
+  // Formulário
   $('form-agendamento').addEventListener('submit', aoEnviarFormulario);
   $('data').addEventListener('change', aoEscolherData);
   $('servico').addEventListener('change', atualizarOpcaoDomiciliar);
   $('domiciliar').addEventListener('change', mostrarOuEsconderEndereco);
   $('cep').addEventListener('input', aoDigitarCep);
   $('cep').addEventListener('blur', aoSairDoCep);
+
+  // Agenda
   $('data-agenda').addEventListener('change', aoTrocarDiaAgenda);
+  $('busca').addEventListener('input', aoBuscar);
+  $('filtro-status').addEventListener('change', aoFiltrarStatus);
+  $('lista-agenda').addEventListener('click', aoClicarNaLista);
+  $('lista-agenda').addEventListener('mouseover', aoPassarMouse);
+  $('lista-agenda').addEventListener('mouseout', aoPassarMouse);
+  document.addEventListener('keydown', aoApertarTecla);
+
+  // Dados
   $('btn-exemplo').addEventListener('click', aoCarregarExemplo);
 
   carregarCatalogo();
@@ -232,8 +248,18 @@ async function aoEscolherData() {
 // tela
 
 function atualizarTela() {
+  const doDia = estado.agenda.filter(porData(estado.dataAgenda));
+  const itens = ordenarPorHorario(
+    filtrarAgendamentos(doDia, porStatus(estado.filtroStatus), porBusca(estado.busca))
+  );
+
+  ui.renderizarAgenda({
+    itens,
+    totalDoDia: doDia.length,
+    expandidos: estado.expandidos,
+    proximo: proximoAtendimento(estado.agenda, hojeISO(), horaAtual()),
+  });
   ui.renderizarFechamento(calcularFechamento(estado.agenda, estado.dataAgenda));
-  // na US06 entra aqui também a lista da agenda
 }
 
 function aoTrocarDiaAgenda() {
@@ -252,6 +278,96 @@ async function aoCarregarExemplo() {
     ui.mostrarToast(`${estado.agenda.length} agendamentos de exemplo carregados.`, 'info');
   } catch {
     ui.mostrarToast('Não foi possível carregar os dados de exemplo.', 'erro');
+  }
+}
+
+// agenda do dia US06
+
+function aoBuscar() {
+  estado.busca = $('busca').value;
+  atualizarTela();
+}
+
+function aoFiltrarStatus() {
+  estado.filtroStatus = $('filtro-status').value;
+  atualizarTela();
+}
+
+// Depois de redesenhar, devolve o foco ao item
+function focarItem(protocolo) {
+  const botao = document.querySelector(`[data-protocolo="${protocolo}"] .item__toggle`);
+  if (botao) botao.focus();
+}
+
+function alterarStatusDoItem(protocolo, novoStatus) {
+  const agendamento = estado.agenda.find((a) => a.protocolo === protocolo);
+  if (!agendamento) return;
+
+  try {
+    agendamento.alterarStatus(novoStatus); // a regra (RN05) está na classe
+  } catch (erro) {
+    ui.mostrarToast(erro.message, 'erro');
+    return;
+  }
+
+  atualizarTela();
+  focarItem(protocolo);
+  const concluiu = novoStatus === STATUS.CONCLUIDO;
+  ui.mostrarToast(
+    concluiu
+      ? `${protocolo} (${agendamento.pet}) concluído.`
+      : `${protocolo} (${agendamento.pet}) cancelado. O horário foi liberado.`,
+    concluiu ? 'sucesso' : 'info'
+  );
+}
+
+// DELEGAÇÃO: um único listener na <ul>, mesmo com os itens sendo recriados a cada renderização
+function aoClicarNaLista(evento) {
+  const botao = evento.target.closest('[data-acao]'); // qual botão?
+  if (!botao) return;
+  const protocolo = botao.closest('.item').dataset.protocolo; // qual item?
+
+  switch (botao.dataset.acao) {
+    case 'concluir':
+      alterarStatusDoItem(protocolo, STATUS.CONCLUIDO);
+      break;
+    case 'cancelar':
+      alterarStatusDoItem(protocolo, STATUS.CANCELADO);
+      break;
+    case 'alternar':
+      if (estado.expandidos.has(protocolo)) estado.expandidos.delete(protocolo);
+      else estado.expandidos.add(protocolo);
+      atualizarTela();
+      focarItem(protocolo);
+      break;
+    default:
+      break;
+  }
+}
+
+// Mouse: realça o item (mouseover/mouseout "borbulham" dos filhos até a <ul>)
+function aoPassarMouse(evento) {
+  const item = evento.target.closest('.item');
+  if (item) item.classList.toggle('item--realce', evento.type === 'mouseover');
+}
+
+// Atalhos de teclado: N, / e Esc
+function aoApertarTecla(evento) {
+  if (evento.key === 'Escape' && evento.target.id === 'busca') {
+    $('busca').value = '';
+    aoBuscar();
+    return;
+  }
+  if (evento.target.matches('input, textarea, select')) return; 
+  if (evento.ctrlKey || evento.metaKey || evento.altKey) return; 
+
+  if (evento.key === '/') {
+    evento.preventDefault(); // senão o "/" seria digitado na busca
+    $('busca').focus();
+  }
+  if (evento.key.toLowerCase() === 'n') {
+    evento.preventDefault();
+    $('tutor').focus(); // 
   }
 }
 
