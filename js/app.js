@@ -5,6 +5,7 @@ import { validarAgendamento, hojeISO, horaAtual, formatarData, encontrarFeriado,
 import {
   calcularFechamento, filtrarAgendamentos, porData, porStatus, porBusca, ordenarPorHorario, proximoAtendimento,
 } from './dominio/fechamento.js';
+import { lerJSON, salvarJSON, limparDados, CHAVES } from './storage.js';
 
 const estado = {
   servicos: [],                              // Servico[]
@@ -28,6 +29,7 @@ function mensagemErroCatalogo(erro) {
 async function carregarCatalogo() {
   const aviso = $('estado-servicos');
   ui.mostrarEstado(aviso, 'carregando', 'Carregando serviços…');
+  
 
   try {
     const dados = await carregarServicos();
@@ -40,6 +42,7 @@ async function carregarCatalogo() {
   ui.esconderEstado(aviso);
   ui.renderizarServicos($('lista-servicos'), estado.servicos);
   ui.popularSelectServicos($('servico'), estado.servicos);
+  restaurarAgenda();
 }
 
 
@@ -102,7 +105,7 @@ function aoEnviarFormulario(evento) {
   }
 
   novo.protocolo = estado.gerarProtocolo(); 
-  estado.agenda.push(novo);
+  estado.agenda.push(novo); salvarAgenda();
   estado.dataAgenda = novo.data; 
   $('data-agenda').value = novo.data;
 
@@ -191,34 +194,6 @@ function limparEndereco() {
   atualizarOpcaoDomiciliar();
 }
 
-function iniciar() {
-  $('data').min = hojeISO();
-  $('data-agenda').value = estado.dataAgenda;
-
-  // Formulário
-  $('form-agendamento').addEventListener('submit', aoEnviarFormulario);
-  $('data').addEventListener('change', aoEscolherData);
-  $('servico').addEventListener('change', atualizarOpcaoDomiciliar);
-  $('domiciliar').addEventListener('change', mostrarOuEsconderEndereco);
-  $('cep').addEventListener('input', aoDigitarCep);
-  $('cep').addEventListener('blur', aoSairDoCep);
-
-  // Agenda
-  $('data-agenda').addEventListener('change', aoTrocarDiaAgenda);
-  $('busca').addEventListener('input', aoBuscar);
-  $('filtro-status').addEventListener('change', aoFiltrarStatus);
-  $('lista-agenda').addEventListener('click', aoClicarNaLista);
-  $('lista-agenda').addEventListener('mouseover', aoPassarMouse);
-  $('lista-agenda').addEventListener('mouseout', aoPassarMouse);
-  document.addEventListener('keydown', aoApertarTecla);
-
-  // Dados
-  $('btn-exemplo').addEventListener('click', aoCarregarExemplo);
-
-  carregarCatalogo();
-  atualizarTela();
-}
-
 async function aoEscolherData() {
   const data = $('data').value;
   estado.feriado = null;
@@ -270,7 +245,7 @@ function aoTrocarDiaAgenda() {
 async function aoCarregarExemplo() {
   try {
     const dados = await carregarAgendaExemplo();
-    estado.agenda = dados.map((item) => criarAgendamento(item, estado.servicos));
+    estado.agenda = dados.map((item) => criarAgendamento(item, estado.servicos)); salvarAgenda();
     estado.gerarProtocolo = criarGeradorProtocolo(maiorNumeroProtocolo(estado.agenda)); // RN07
     estado.dataAgenda = '2026-10-20';
     $('data-agenda').value = estado.dataAgenda;
@@ -290,6 +265,7 @@ function aoBuscar() {
 
 function aoFiltrarStatus() {
   estado.filtroStatus = $('filtro-status').value;
+  salvarJSON(CHAVES.filtro, estado.filtroStatus);
   atualizarTela();
 }
 
@@ -309,6 +285,7 @@ function alterarStatusDoItem(protocolo, novoStatus) {
     ui.mostrarToast(erro.message, 'erro');
     return;
   }
+  salvarAgenda();
 
   atualizarTela();
   focarItem(protocolo);
@@ -369,6 +346,127 @@ function aoApertarTecla(evento) {
     evento.preventDefault();
     $('tutor').focus(); // 
   }
+}
+
+// persistencia US08
+
+// Grava objetos simples (paraJSON)
+function salvarAgenda() {
+  salvarJSON(CHAVES.agenda, estado.agenda.map((a) => a.paraJSON()));
+}
+
+
+// Lê do localStorage e recria as instâncias com a fábrica
+function restaurarAgenda() {
+  const salvos = lerJSON(CHAVES.agenda, []);
+  const lista = Array.isArray(salvos) ? salvos : []; // dado estranho → começa vazio
+
+  estado.agenda = [];
+  for (const dados of lista) {
+    try {
+      if (!dados || typeof dados.protocolo !== 'string') throw new Error('Item sem protocolo');
+      estado.agenda.push(criarAgendamento(dados, estado.servicos));
+    } catch {
+      // item inválido é ignorado; o resto da agenda carrega
+    }
+  }
+
+  estado.gerarProtocolo = criarGeradorProtocolo(maiorNumeroProtocolo(estado.agenda)); // RN07
+  atualizarTela();
+}
+
+// tema
+
+function aplicarTema(tema) {
+  const escuro = tema === 'escuro';
+  document.documentElement.dataset.tema = escuro ? 'escuro' : 'claro'; // <html data-tema="...">
+  $('btn-tema').textContent = escuro ? 'Tema claro' : 'Tema escuro';
+  $('btn-tema').setAttribute('aria-pressed', String(escuro));
+}
+
+function aoTrocarTema() {
+  const novo = document.documentElement.dataset.tema === 'escuro' ? 'claro' : 'escuro';
+  aplicarTema(novo);
+  salvarJSON(CHAVES.tema, novo);
+}
+
+// exportar e limpar
+
+function aoExportar() {
+  const conteudo = JSON.stringify(estado.agenda.map((a) => a.paraJSON()), null, 2);
+  ui.baixarArquivo(`agendapet-${hojeISO()}.json`, conteudo);
+  ui.mostrarToast(`Agenda exportada (${estado.agenda.length} agendamentos).`, 'info');
+}
+
+// Duas etapas: o 1º clique pede confirmação; se não confirmar em 4 s, o botão volta
+let timerConfirmarLimpeza = null;
+
+function aoLimparDados() {
+  const botao = $('btn-limpar');
+
+  if (!timerConfirmarLimpeza) {
+    botao.textContent = 'Clique de novo para confirmar';
+    timerConfirmarLimpeza = setTimeout(() => {
+      botao.textContent = 'Limpar meus dados';
+      timerConfirmarLimpeza = null;
+    }, 4000);
+    return;
+  }
+
+  clearTimeout(timerConfirmarLimpeza);
+  timerConfirmarLimpeza = null;
+  botao.textContent = 'Limpar meus dados';
+
+  const removidos = limparDados();
+  estado.agenda = [];
+  estado.gerarProtocolo = criarGeradorProtocolo(0);
+  estado.filtroStatus = 'todos';
+  $('filtro-status').value = 'todos';
+  estado.expandidos.clear();
+  aplicarTema('claro');
+  atualizarTela();
+  ui.mostrarToast(`Dados da AgendaPet removidos (${removidos} itens).`, 'info');
+}
+
+const FILTROS_VALIDOS = ['todos', 'Agendado', 'Concluído', 'Cancelado'];
+
+function iniciar() {
+  // 1. Preferências salvas (seção 6.1 do Refinamento)
+  aplicarTema(lerJSON(CHAVES.tema, 'claro'));
+  const filtroSalvo = lerJSON(CHAVES.filtro, 'todos');
+  estado.filtroStatus = FILTROS_VALIDOS.includes(filtroSalvo) ? filtroSalvo : 'todos';
+  $('filtro-status').value = estado.filtroStatus;
+
+  $('data').min = hojeISO();
+  $('data-agenda').value = estado.dataAgenda;
+
+  // Cabeçalho
+  $('btn-tema').addEventListener('click', aoTrocarTema);
+
+  // Formulário
+  $('form-agendamento').addEventListener('submit', aoEnviarFormulario);
+  $('data').addEventListener('change', aoEscolherData);
+  $('servico').addEventListener('change', atualizarOpcaoDomiciliar);
+  $('domiciliar').addEventListener('change', mostrarOuEsconderEndereco);
+  $('cep').addEventListener('input', aoDigitarCep);
+  $('cep').addEventListener('blur', aoSairDoCep);
+
+  // Agenda
+  $('data-agenda').addEventListener('change', aoTrocarDiaAgenda);
+  $('busca').addEventListener('input', aoBuscar);
+  $('filtro-status').addEventListener('change', aoFiltrarStatus);
+  $('lista-agenda').addEventListener('click', aoClicarNaLista);
+  $('lista-agenda').addEventListener('mouseover', aoPassarMouse);
+  $('lista-agenda').addEventListener('mouseout', aoPassarMouse);
+  document.addEventListener('keydown', aoApertarTecla);
+
+  // Dados
+  $('btn-exemplo').addEventListener('click', aoCarregarExemplo);
+  $('btn-exportar').addEventListener('click', aoExportar);
+  $('btn-limpar').addEventListener('click', aoLimparDados);
+
+  carregarCatalogo(); // ao terminar, restaura a agenda salva
+  atualizarTela();
 }
 
 iniciar();
