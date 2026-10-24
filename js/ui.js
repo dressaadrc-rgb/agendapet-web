@@ -236,3 +236,13 @@ function criarBotaoAcao(acao, texto, variante, desabilitado, a) {
   botao.setAttribute('aria-label', `${texto} ${a.protocolo} (${a.pet})`);
   return botao;
 }
+
+export function baixarArquivo(nome, conteudo, tipo = 'application/json') {
+  const arquivo = new Blob([conteudo], { type: tipo });
+  const url = URL.createObjectURL(arquivo); // endereço temporário para o arquivo em memória
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = nome; // faz o navegador BAIXAR em vez de abrir
+  link.click();
+  URL.revokeObjectURL(url); // libera a memória
+}
