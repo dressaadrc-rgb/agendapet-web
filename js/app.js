@@ -1,9 +1,9 @@
 import { carregarServicos, buscarCep, buscarFeriados, carregarAgendaExemplo } from './api.js';
 import * as ui from './ui.js';
-import { Servico, STATUS, criarAgendamento, criarGeradorProtocolo, maiorNumeroProtocolo } from './dominio/agendamento.js';
-import { validarAgendamento, hojeISO, horaAtual, formatarData, encontrarFeriado, temConflito } from './dominio/regras.js';
+import { Servico, STATUS, CONFIG, criarAgendamento, criarGeradorProtocolo, maiorNumeroProtocolo } from './dominio/agendamento.js';
+import { validarAgendamento, hojeISO, horaAtual, minutosAte, formatarData, encontrarFeriado, temConflito } from './dominio/regras.js';
 import {
-  calcularFechamento, filtrarAgendamentos, porData, porStatus, porBusca, ordenarPorHorario, proximoAtendimento,
+  calcularFechamento, filtrarAgendamentos, porData, porStatus, porBusca, ordenarPorHorario, proximoAtendimento, estaAtrasado,
 } from './dominio/fechamento.js';
 import { lerJSON, salvarJSON, limparDados, CHAVES } from './storage.js';
 
@@ -16,6 +16,9 @@ const estado = {
   expandidos: new Set(),                     // protocolos com detalhes abertos
   feriado: null,                             // { date, name } se a data escolhida for feriado
   gerarProtocolo: criarGeradorProtocolo(0),  // closure: AP-0001, AP-0002...
+  timerLembretes: null,     // id do setInterval (só pode existir UM)
+  lembretesAtivos: true,
+  assinaturaAtrasados: '',  // quem estava atrasado na última vez que a lista foi desenhada
 };
 
 const $ = (id) => document.getElementById(id);
@@ -223,18 +226,17 @@ async function aoEscolherData() {
 // tela
 
 function atualizarTela() {
+  const atrasados = calcularAtrasados();
+  estado.assinaturaAtrasados = [...atrasados].join(',');
+
   const doDia = estado.agenda.filter(porData(estado.dataAgenda));
   const itens = ordenarPorHorario(
     filtrarAgendamentos(doDia, porStatus(estado.filtroStatus), porBusca(estado.busca))
   );
 
-  ui.renderizarAgenda({
-    itens,
-    totalDoDia: doDia.length,
-    expandidos: estado.expandidos,
-    proximo: proximoAtendimento(estado.agenda, hojeISO(), horaAtual()),
-  });
+  ui.renderizarAgenda({ itens, totalDoDia: doDia.length, expandidos: estado.expandidos, atrasados });
   ui.renderizarFechamento(calcularFechamento(estado.agenda, estado.dataAgenda));
+  atualizarAvisos();
 }
 
 function aoTrocarDiaAgenda() {
@@ -442,6 +444,7 @@ function iniciar() {
 
   // Cabeçalho
   $('btn-tema').addEventListener('click', aoTrocarTema);
+  $('btn-lembretes').addEventListener('click', aoAlternarLembretes);
 
   // Formulário
   $('form-agendamento').addEventListener('submit', aoEnviarFormulario);
@@ -467,6 +470,64 @@ function iniciar() {
 
   carregarCatalogo(); // ao terminar, restaura a agenda salva
   atualizarTela();
+  iniciarLembretes();
+}
+
+// relógio e lembretes (US09)
+
+function calcularAtrasados(agora = new Date()) {
+  const hoje = hojeISO(agora);
+  const hora = horaAtual(agora);
+  return new Set(
+    estado.agenda.filter((a) => estaAtrasado(a, hoje, hora)).map((a) => a.protocolo)
+  );
+}
+
+// Atualiza só os textos sem redesenhar a lista
+function atualizarAvisos(agora = new Date()) {
+  const proximo = proximoAtendimento(estado.agenda, hojeISO(agora), horaAtual(agora));
+  const minutos = proximo ? minutosAte(proximo.hora, agora) : null;
+  ui.mostrarProximo(proximo, minutos);
+
+  const lembrar = estado.lembretesAtivos && proximo && minutos <= CONFIG.lembreteMin;
+  ui.mostrarLembrete(
+    lembrar ? `Lembrete: ${proximo.pet} (${proximo.servico.nome}) às ${proximo.hora}, em ${minutos} min.` : null
+  );
+}
+
+// Roda a cada 30 s
+function atualizarRelogio() {
+  const agora = new Date();
+  ui.mostrarRelogio(horaAtual(agora));
+
+  // Só redesenha a lista se mudou QUEM está atrasado
+  const assinatura = [...calcularAtrasados(agora)].join(',');
+  if (assinatura !== estado.assinaturaAtrasados) atualizarTela();
+  else atualizarAvisos(agora);
+}
+
+function iniciarLembretes() {
+  clearInterval(estado.timerLembretes); // nunca dois timers
+  estado.timerLembretes = setInterval(atualizarRelogio, 30_000);
+  atualizarRelogio(); // já mostra agora sem esperar 30 s
+}
+
+function aoAlternarLembretes() {
+  estado.lembretesAtivos = !estado.lembretesAtivos;
+
+  if (estado.lembretesAtivos) {
+    iniciarLembretes();
+    ui.mostrarToast('Lembretes retomados.', 'info');
+  } else {
+    clearInterval(estado.timerLembretes);
+    estado.timerLembretes = null;
+    ui.mostrarLembrete(null);
+    ui.mostrarToast('Lembretes pausados.', 'info');
+  }
+
+  const botao = $('btn-lembretes');
+  botao.textContent = estado.lembretesAtivos ? 'Pausar lembretes' : 'Retomar lembretes';
+  botao.setAttribute('aria-pressed', String(!estado.lembretesAtivos));
 }
 
 iniciar();
