@@ -89,3 +89,8 @@ export function encontrarFeriado(feriados, data) {
 export function temConflito(lista, novo) {
   return lista.find((a) => novo.conflitaCom(a)) ?? null;
 }
+
+// Quantos minutos faltam de agora até "HH:MM" (negativo = já passou)
+export function minutosAte(hora, agora = new Date()) {
+  return paraMinutos(hora) - paraMinutos(horaAtual(agora));
+}
