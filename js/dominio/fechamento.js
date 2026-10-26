@@ -59,3 +59,9 @@ export function proximoAtendimento(lista, data, hora) {
   return ordenarPorHorario(lista)
     .find((a) => a.data === data && a.status === STATUS.AGENDADO && a.hora >= hora) ?? null;
 }
+
+// RN09: atrasado = ainda "Agendado" e o horário já passou
+export function estaAtrasado(a, hoje, horaAgora) {
+  return a.status === STATUS.AGENDADO
+    && (a.data < hoje || (a.data === hoje && a.hora < horaAgora));
+}

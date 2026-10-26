@@ -1,7 +1,7 @@
 // Regras da loja
 
 // RN01 (funcionamento) e RN03 (taxa domiciliar). Object.freeze: ninguém altera sem querer.
-export const CONFIG = Object.freeze({
+export const CONFIG = Object.freeze({  lembreteMin: 15, // RN09: avisa quando faltarem 15 min ou menos
   abertura: '08:00',
   fechamento: '18:00',
   passoMin: 30,
@@ -173,3 +173,4 @@ export function criarGeradorProtocolo(ultimo = 0) {
 export function maiorNumeroProtocolo(lista) {
   return lista.reduce((maior, a) => Math.max(maior, Number(a.protocolo.replace('AP-', '')) || 0), 0);
 }
+

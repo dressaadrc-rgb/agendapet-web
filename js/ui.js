@@ -160,9 +160,11 @@ function criar(tag, classe, texto) {
   return elemento;
 }
 
-export function renderizarAgenda({ itens, totalDoDia, expandidos, proximo }) {
+export function renderizarAgenda({ itens, totalDoDia, expandidos, atrasados }) {
   const lista = document.getElementById('lista-agenda');
-  lista.replaceChildren(...itens.map((a) => criarItemAgenda(a, expandidos.has(a.protocolo))));
+  lista.replaceChildren(
+    ...itens.map((a) => criarItemAgenda(a, expandidos.has(a.protocolo), atrasados.has(a.protocolo)))
+  );
 
   const quantidade = itens.length;
   document.getElementById('contador-agenda').textContent =
@@ -173,15 +175,12 @@ export function renderizarAgenda({ itens, totalDoDia, expandidos, proximo }) {
   vazio.textContent = totalDoDia === 0
     ? 'Nenhum agendamento para este dia. Use o formulário para criar o primeiro.'
     : 'Nenhum agendamento corresponde à busca ou ao filtro.';
-
-  document.getElementById('proximo-atendimento').textContent = proximo
-    ? `Próximo atendimento de hoje: ${proximo.hora} — ${proximo.pet} (${proximo.servico.nome})`
-    : 'Próximo atendimento de hoje: nenhum pendente';
 }
 
-function criarItemAgenda(a, expandido) {
+function criarItemAgenda(a, expandido, atrasado) {
   const item = criar('li', `item item--${CLASSE_STATUS[a.status]}`);
   if (expandido) item.classList.add('item--expandido');
+  if (atrasado) item.classList.add('item--atrasado');
   item.dataset.protocolo = a.protocolo; // vira data-protocolo="AP-0001" no HTML
 
   // Botão que abre/fecha os detalhes (acessível por teclado)
@@ -200,7 +199,9 @@ function criarItemAgenda(a, expandido) {
   // Selo de status (texto + cor) e valor
   const selos = criar('div', 'item__selos');
   selos.append(
-    criar('span', `selo selo--${CLASSE_STATUS[a.status]}`, a.status),
+    atrasado
+    ? criar('span', 'selo selo--atrasado', 'Atrasado')
+    : criar('span', `selo selo--${CLASSE_STATUS[a.status]}`, a.status),
     criar('span', 'item__valor', formatarMoeda(a.calcularValor())),
   );
 
@@ -245,4 +246,27 @@ export function baixarArquivo(nome, conteudo, tipo = 'application/json') {
   link.download = nome; // faz o navegador BAIXAR em vez de abrir
   link.click();
   URL.revokeObjectURL(url); // libera a memória
+}
+
+// relógio, próximo atendimento e lembrete 
+
+export function mostrarRelogio(hora) {
+  document.getElementById('relogio').textContent = hora;
+}
+
+export function mostrarProximo(proximo, minutos) {
+  const texto = document.getElementById('proximo-atendimento');
+  if (!proximo) {
+    texto.textContent = 'Próximo atendimento de hoje: nenhum pendente';
+    return;
+  }
+  const quando = minutos <= 0 ? 'agora' : `em ${minutos} min`;
+  texto.textContent = `Próximo atendimento de hoje: ${proximo.hora} — ${proximo.pet} (${proximo.servico.nome}), ${quando}`;
+}
+
+// texto = null esconde o lembrete
+export function mostrarLembrete(texto) {
+  const lembrete = document.getElementById('lembrete');
+  lembrete.textContent = texto ?? '';
+  lembrete.hidden = !texto;
 }
