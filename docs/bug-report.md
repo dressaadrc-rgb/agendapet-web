@@ -5,7 +5,7 @@
 | **Título** | O faturamento do dia somava atendimentos ainda não concluídos |
 | **Ticket relacionado** | US07 – Regras de negócio e fechamento do dia (RN06) |
 | **Onde apareceu** | `js/dominio/fechamento.js`, função `calcularFechamento`; visível em `npm run fechamento`, no painel "Fechamento do dia" da página e no `npm test` |
-| **Branch da correção** | `docs/US12-depuracao` (PR #__) |
+| **Branch da correção** | `docs/US12-depuracao` (PR #27) |
 | **Gravidade** | Alta — o dono da loja veria um faturamento maior do que o dinheiro realmente recebido e fecharia o caixa com um valor errado |
 
 > **Observação:** este é um **erro controlado**, introduzido de propósito (commit `f17d161`), como o Refinamento Técnico permite, para praticar o método de depuração: reproduzir → hipótese → evidência no depurador → causa raiz → correção. Um bug real encontrado durante a sprint está descrito no final deste relatório.
@@ -64,7 +64,7 @@ faturamento: somarValores(concluidos), // RN06: SÓ concluídos
 
 ## Correção
 
-- Commit: `6b7ce44` — `fix(US07): soma só atendimentos concluídos no faturamento` (PR #__)
+- Commit: `6b7ce44` — `fix(US07): soma só atendimentos concluídos no faturamento` (PR #27)
 - Como confirmar que foi corrigido:
   - `npm run fechamento` → "Faturamento (só concluídos): R$ 515,00"
   - `npm test` → 6 testes passando, 0 falhas
