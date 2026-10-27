@@ -47,7 +47,7 @@ export function calcularFechamento(lista, data) {
     concluidos: concluidos.length,
     agendados: agendados.length,
     cancelados: cancelados.length,
-    faturamento: somarValores(concluidos), 
+    faturamento: somarValores(concluidos), // RN06: SÓ concluídos
     aReceber: somarValores(agendados),
     porServico,
     encerrado: doDia.length > 0 && doDia.every((a) => a.status !== STATUS.AGENDADO),
