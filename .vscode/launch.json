@@ -1,0 +1,23 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "Depurar fechamento do dia (Node)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/fechamento-dia.js",
+      "args": ["--data=2026-10-20"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    },
+    {
+      "name": "Depurar validador da agenda (Node)",
+      "type": "node",
+      "request": "launch",
+      "program": "${workspaceFolder}/scripts/validar-agenda.cjs",
+      "args": ["data/agenda-invalida.json"],
+      "console": "integratedTerminal",
+      "skipFiles": ["<node_internals>/**"]
+    }
+  ]
+}
