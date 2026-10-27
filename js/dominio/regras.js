@@ -94,3 +94,17 @@ export function temConflito(lista, novo) {
 export function minutosAte(hora, agora = new Date()) {
   return paraMinutos(hora) - paraMinutos(horaAtual(agora));
 }
+
+// "2026-10-20" válido; "2026-13-45" inválido (mês 13 e dia 45 não existem)
+export function dataValida(texto) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(texto)) return false;
+  const [ano, mes, dia] = texto.split('-').map(Number);
+  const data = new Date(ano, mes - 1, dia);
+  // Se o dia não existe, o Date "transborda" (ex.: 31/02 vira 03/03), e a conferência falha
+  return data.getFullYear() === ano && data.getMonth() === mes - 1 && data.getDate() === dia;
+}
+
+// "09:30" válido; "25:00" inválido
+export function horaValida(texto) {
+  return /^([01]\d|2[0-3]):[0-5]\d$/.test(texto);
+}

@@ -1,4 +1,5 @@
 import { STATUS, normalizarTexto } from './agendamento.js';
+import { formatarMoeda, formatarData } from './regras.js';
 
 // CALLBACK
 export function filtrarAgendamentos(lista, ...criterios) {
@@ -64,4 +65,28 @@ export function proximoAtendimento(lista, data, hora) {
 export function estaAtrasado(a, hoje, horaAgora) {
   return a.status === STATUS.AGENDADO
     && (a.data < hoje || (a.data === hoje && a.hora < horaAgora));
+}
+
+// Linhas de texto do relatório para o terminal (a regra aqui)
+export function montarLinhasRelatorio(f) {
+  let situacao = 'sem atendimentos';
+  if (f.total > 0) situacao = f.encerrado ? 'dia encerrado' : 'dia em andamento';
+
+  const linhas = [
+    `Fechamento do dia ${formatarData(f.data)} — Patinhas & Cia`,
+    '='.repeat(52),
+    `Atendimentos: ${f.total} | Concluídos: ${f.concluidos} | Agendados: ${f.agendados} | Cancelados: ${f.cancelados}`,
+    `Faturamento (só concluídos): ${formatarMoeda(f.faturamento)}`,
+    `A receber (agendados):       ${formatarMoeda(f.aReceber)}`,
+    `Situação: ${situacao}`,
+    '',
+    'Por serviço (ativos):',
+  ];
+
+  if (f.porServico.length === 0) linhas.push('  (nenhum)');
+  f.porServico.forEach((s) => {
+    linhas.push(`  - ${s.servico}: ${s.quantidade} | faturado ${formatarMoeda(s.faturado)}`);
+  });
+
+  return linhas;
 }
