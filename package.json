@@ -1,8 +1,7 @@
 {
   "name": "agendapet-web",
   "version": "1.0.0",
-  "description": "Painel de agendamentos do pet shop Patinhas & Cia",
-  "main": "index.js",
+  "description": "Painel web de agendamentos do pet shop Patinhas & Cia: catálogo, agenda do dia, lembretes e fechamento do caixa no navegador e no terminal",
   "type": "module",
   "scripts": {
     "start": "http-server . -p 5500 -c-1 -o",
@@ -15,8 +14,8 @@
     "type": "git",
     "url": "git+https://github.com/dressaadrc-rgb/agendapet-web.git"
   },
-  "keywords": [],
-  "author": "",
+  "keywords": ["agendamento", "pet-shop", "javascript", "html", "css", "nodejs", "esm"],
+  "author": "Andressa Rosa",
   "license": "ISC",
   "bugs": {
     "url": "https://github.com/dressaadrc-rgb/agendapet-web/issues"
