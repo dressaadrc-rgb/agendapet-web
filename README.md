@@ -183,9 +183,6 @@ Mudanças durante a sprint: o prazo de entrega passou de 02/11 para 03/11 (aviso
 
 ## 11. Extensões do VS Code
 
-
-## 11. Extensões do VS Code
-
 Usadas neste projeto:
 
 | Extensão | Para que usei |
