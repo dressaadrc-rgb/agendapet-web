@@ -1,6 +1,6 @@
 # Sprint Planning — AgendaPet Web
 
-**Sprint:** 16/10/2026 a 03/11/2026 (Semanas 13 e 14) · **Cliente:** Patinhas & Cia · **Equipe:** 1 pessoa desenvolvedora (Andressa Rosa)
+**Sprint:** 16/10/2026 a 02/11/2026 (Semanas 13 e 14) · **Cliente:** Patinhas & Cia · **Equipe:** 1 pessoa desenvolvedora (Andressa Rosa)
 
 ## Meta da sprint
 
@@ -50,9 +50,9 @@ Os requisitos obrigatórios (US01 a US12) não entram nesta lista. Se faltar tem
 
 ## Definição de Pronto para Iniciar (cada cartão)
 
-- [ ] História lida e critérios de aceite entendidos
-- [ ] Ticket estimado em pontos
-- [ ] Branch criada no padrão `tipo/US##-descricao`
+- [x] História lida e critérios de aceite entendidos
+- [x] Ticket estimado em pontos
+- [x] Branch criada no padrão `tipo/US##-descricao`
 
 ## Cerimônias
 
@@ -62,4 +62,4 @@ Os requisitos obrigatórios (US01 a US12) não entram nesta lista. Se faltar tem
 | 20, 22 e 23/10 | Mentoria — Semana 13 | 20/10: US01, US10 (base) e US02 · 22/10: US03, US04 e US05 · 23/10: US07 e US06 |
 | 27 e 29/10 | Mentoria — Semana 14 | 27/10: US08 e US09 · 29/10: US11 e US12 |
 | 30/10 | Apresentação em live coding (Google Meet) + Retrospectiva | Demonstração de 15 min com código e tela funcionando; retrospectiva no README |
-| 03/11 | Entrega no AVA (até 22h) | Links do repositório e do Kanban |
+| 02/11 | Entrega no AVA (até 22h) | Links do repositório e do Kanban |

@@ -6,6 +6,8 @@ Painel web de agendamentos do pet shop Patinhas & Cia (empresa fictícia): a ate
 > 🌐 > 🌐 **GitHub Pages (bônus):** https://dressaadrc-rgb.github.io/agendapet-web/
 > 📁 **Repositório:** https://github.com/dressaadrc-rgb/agendapet-web
 
+![Quadro Kanban](docs/kanban.png)
+
 ## 1. O que o sistema faz e para quem serve
 
 Hoje a Patinhas & Cia marca os atendimentos por WhatsApp e caderno, o que causa horários duplicados, atendimentos em feriados sem aviso, endereços errados nas visitas a domicílio e nenhuma noção de quanto o dia rendeu. O AgendaPet Web resolve isso para três pessoas:
@@ -50,7 +52,7 @@ O fechamento também aceita outros dias e arquivos: `node scripts/fechamento-dia
 | Faturamento (RN06) | Soma só os **concluídos**; "a receber" soma os agendados; cancelados não entram em valor; "por serviço" conta os ativos | `calcularFechamento()` em `js/dominio/fechamento.js` |
 | Protocolo (RN07) | `AP-0001`, `AP-0002`... sequencial, continuando do maior número salvo | `criarGeradorProtocolo()` e `maiorNumeroProtocolo()` em `agendamento.js` |
 | Feriados (RN08) | Em feriado nacional, só salva marcando "Agendar mesmo assim" | `aoEscolherData()` e `aoEnviarFormulario()` em `js/app.js` |
-| Validade do cache de feriados | 30 dias, uma chave por ano (`agendapet:feriados:2026`) | `buscarFeriados()` em `js/api.js` |
+| Validade do cache de feriados | 30 dias, uma chave por ano (`agendapet:feriados:2026`) | `lerFeriadosCache()` e `salvarFeriadosCache()` em `js/storage.js`, usadas por `buscarFeriados()` em `js/api.js` |
 | Lembrete (RN09) | Quando faltam 15 min ou menos; "Atrasado" = ainda Agendado e o horário já passou | `CONFIG.lembreteMin`; `estaAtrasado()` em `fechamento.js`; `atualizarAvisos()` em `app.js` |
 | Quando as APIs falham | Catálogo: mensagem com "Tentar novamente". ViaCEP: mensagem própria para formato, CEP inexistente, sem rede e serviço fora; o endereço continua editável. BrasilAPI: aviso de indisponibilidade, sem bloquear | `js/api.js` (`ErroApi` com `tipo`); `mensagemErroCatalogo()` e `mensagemErroCep()` em `app.js` |
 
@@ -168,11 +170,11 @@ Bugs reais que encontrei durante a sprint e corrigi lendo o Console do navegador
 | Pontos planejados | 52 |
 | Pontos entregues | 52 |
 | O que ficou de fora e por quê | não fiz estilos de impressão próprios (o CSS do professor já traz um `@media print`). Os testes com `node --test` e o download da agenda em JSON (Blob) foram feitos |
-| Branches / Pull Requests | 15 branches e 15 Pull Requests, todos integrados à `main` |
+| Branches / Pull Requests | 21 branches e 21 Pull Requests, todos integrados à `main` |
 
 Detalhes em [planejamento/sprint-planning.md](planejamento/sprint-planning.md).
 
-Mudanças durante a sprint: o prazo de entrega passou de 02/11 para 03/11 (aviso do professor em aula) e a apresentação foi antecipada de 30/10 para 29/10, a meu pedido, com aprovação do professor. Terminei as histórias antes do cronograma previsto.
+A apresentação foi antecipada de 30/10 para 29/10, a meu pedido, com aprovação do professor. Terminei as histórias antes do cronograma previsto.
 
 ### Retrospectiva
 
@@ -215,6 +217,7 @@ agendapet-web/
 │   ├── depuracao.png
 │   ├── depuracao-bug.png
 │   ├── depuracao-logpoint.png
+│   ├── kanban.png
 │   └── tela-1280.png
 ├── img/
 │   ├── favicon.svg
