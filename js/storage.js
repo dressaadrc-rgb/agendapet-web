@@ -33,3 +33,19 @@ export function limparDados() {
     return 0;
   }
 }
+
+// cache de feriados (US05): 30 dias, uma chave por ano 
+
+const TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
+const chaveFeriados = (ano) => `${PREFIXO}feriados:${ano}`;
+
+// devolve a lista do cache se ainda for válida; senão, null
+export function lerFeriadosCache(ano, agora = Date.now()) {
+  const cache = lerJSON(chaveFeriados(ano), null);
+  const valido = cache && Array.isArray(cache.feriados) && agora - cache.salvoEm < TRINTA_DIAS_MS;
+  return valido ? cache.feriados : null;
+}
+
+export function salvarFeriadosCache(ano, feriados) {
+  return salvarJSON(chaveFeriados(ano), { salvoEm: Date.now(), feriados });
+}

@@ -1,4 +1,4 @@
-import { lerJSON, salvarJSON } from './storage.js';
+import { lerFeriadosCache, salvarFeriadosCache } from './storage.js';
 
 export class ErroApi extends Error {
   constructor(tipo, mensagem) {
@@ -50,18 +50,14 @@ export async function buscarCep(cep) {
   };
 }
 
-const TRINTA_DIAS_MS = 30 * 24 * 60 * 60 * 1000;
+// ---------- Feriados (BrasilAPI) — o cache de 30 dias fica no storage.js ----------
 
 export async function buscarFeriados(ano) {
-  const chave = `agendapet:feriados:${ano}`;
-  const cache = lerJSON(chave, null);
-
-  if (cache && Array.isArray(cache.feriados) && Date.now() - cache.salvoEm < TRINTA_DIAS_MS) {
-    return cache.feriados; 
-  }
+  const emCache = lerFeriadosCache(ano);
+  if (emCache) return emCache; // cache válido: nem vai à internet
 
   const feriados = await buscarJSON(`https://brasilapi.com.br/api/feriados/v1/${ano}`);
-  salvarJSON(chave, { salvoEm: Date.now(), feriados });
+  salvarFeriadosCache(ano, feriados);
   return feriados;
 }
 
