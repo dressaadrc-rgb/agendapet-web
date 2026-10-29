@@ -394,10 +394,27 @@ function aoTrocarTema() {
 
 // exportar e limpar
 
+// Texto da agenda em JSON formatado (2 espaços), igual ao formato do agenda-exemplo.json
+function textoExportacao() {
+  return JSON.stringify(estado.agenda.map((a) => a.paraJSON()), null, 2);
+}
+
 function aoExportar() {
-  const conteudo = JSON.stringify(estado.agenda.map((a) => a.paraJSON()), null, 2);
-  ui.baixarArquivo(`agendapet-${hojeISO()}.json`, conteudo);
-  ui.mostrarToast(`Agenda exportada (${estado.agenda.length} agendamentos).`, 'info');
+  ui.exibirExportacao(textoExportacao());
+  ui.mostrarToast(`Agenda exportada (${estado.agenda.length} agendamentos). Copie ou baixe o arquivo.`, 'info');
+}
+
+async function aoCopiarExportacao() {
+  try {
+    await ui.copiarExportacao();
+    ui.mostrarToast('JSON copiado para a área de transferência.');
+  } catch {
+    ui.mostrarToast('Não foi possível copiar. Selecione o texto e use Cmd+C.', 'erro');
+  }
+}
+
+function aoBaixarExportacao() {
+  ui.baixarArquivo(`agendapet-${hojeISO()}.json`, textoExportacao());
 }
 
 // Duas etapas: o 1º clique pede confirmação; se não confirmar em 4 s, o botão volta
@@ -466,6 +483,8 @@ function iniciar() {
   // Dados
   $('btn-exemplo').addEventListener('click', aoCarregarExemplo);
   $('btn-exportar').addEventListener('click', aoExportar);
+  $('btn-copiar').addEventListener('click', aoCopiarExportacao);
+  $('btn-baixar').addEventListener('click', aoBaixarExportacao);
   $('btn-limpar').addEventListener('click', aoLimparDados);
 
   carregarCatalogo(); // ao terminar, restaura a agenda salva

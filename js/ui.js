@@ -270,3 +270,19 @@ export function mostrarLembrete(texto) {
   lembrete.textContent = texto ?? '';
   lembrete.hidden = !texto;
 }
+
+// exportaçao na tela
+
+export function exibirExportacao(json) {
+  const texto = document.getElementById('texto-exportacao');
+  texto.value = json;
+  document.getElementById('bloco-exportacao').hidden = false;
+  texto.focus();
+  texto.select(); // já deixa selecionado para copiar
+}
+
+// Pode falhar (permissão negada, navegador antigo): quem chama trata o erro
+export async function copiarExportacao() {
+  const texto = document.getElementById('texto-exportacao').value;
+  await navigator.clipboard.writeText(texto);
+}

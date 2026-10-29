@@ -259,10 +259,18 @@
           </div>
 
           <h3 class="subtitulo">Dados</h3>
-          <div class="acoes">
+            <div class="acoes">
             <button type="button" id="btn-exemplo" class="botao botao--secundario">Carregar dados de exemplo</button>
             <button type="button" id="btn-exportar" class="botao botao--secundario">Exportar agenda (JSON)</button>
             <button type="button" id="btn-limpar" class="botao botao--perigo">Limpar meus dados</button>
+            </div>
+            <div class="exportacao" id="bloco-exportacao" hidden>
+            <label class="campo__rotulo" for="texto-exportacao">Agenda exportada (JSON)</label>
+            <textarea class="campo__entrada exportacao__texto" id="texto-exportacao" rows="10" readonly></textarea>
+            <div class="acoes">
+              <button type="button" id="btn-copiar" class="botao botao--secundario">Copiar</button>
+              <button type="button" id="btn-baixar" class="botao botao--secundario">Baixar arquivo</button>
+            </div>
           </div>
         </section>
 
